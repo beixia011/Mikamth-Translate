@@ -1,0 +1,278 @@
+/* 中文注释：配置页重构为“侧边栏 + 内容区 + Footer”三段式结构，便于后续模块扩展。 */
+:root {
+  font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #1f2937;
+  background: #f3f5f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.settings-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  background: linear-gradient(125deg, #eef5ff 0%, #f6f0e8 100%);
+}
+
+.sidebar {
+  border-right: 1px solid #dbe4ef;
+  background: rgba(10, 30, 58, 0.95);
+  color: #e6edf7;
+  padding: 20px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.brand h1 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.brand p {
+  margin: 0;
+  font-size: 12px;
+  color: #b4c8e3;
+}
+
+.nav-list {
+  display: grid;
+  gap: 8px;
+}
+
+.nav-item {
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  padding: 10px;
+  cursor: pointer;
+  display: grid;
+  gap: 4px;
+}
+
+.nav-item .title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nav-item .desc {
+  font-size: 12px;
+  color: #b5c7dd;
+  line-height: 1.4;
+}
+
+.nav-item:hover {
+  background: rgba(74, 113, 158, 0.2);
+}
+
+.nav-item.active {
+  background: rgba(117, 183, 255, 0.2);
+  border-color: rgba(145, 205, 255, 0.6);
+}
+
+.content-area {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.content-head {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid #dbe4ef;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.content-head h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.content-head p {
+  margin: 0;
+  color: #546274;
+  font-size: 14px;
+}
+
+.panel {
+  flex: 1;
+  border: 1px solid #dbe4ef;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.field span {
+  font-size: 13px;
+  color: #334155;
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid #c8d3e1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: 2px solid #2b79ff;
+  outline-offset: 1px;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 110px;
+  line-height: 1.45;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.checkbox,
+.radio-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #334155;
+  font-size: 13px;
+}
+
+.field-group {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.field-group .label {
+  font-size: 13px;
+  color: #334155;
+  font-weight: 600;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #ffffff;
+  background: #0f766e;
+  cursor: pointer;
+}
+
+button.small {
+  background: #0369a1;
+  padding: 8px 12px;
+}
+
+button:hover {
+  filter: brightness(0.96);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.hint {
+  margin: 4px 0 0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.hint.warning {
+  color: #9a3412;
+}
+
+.placeholder-card {
+  border: 1px dashed #b6c6d8;
+  border-radius: 10px;
+  background: #f8fafc;
+  padding: 14px;
+}
+
+.placeholder-card h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.placeholder-card p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.actions {
+  margin-top: 16px;
+}
+
+.message {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: #065f46;
+  background: #ecfdf3;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.page-footer {
+  border: 1px dashed #c4d1df;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 10px 12px;
+  color: #475569;
+  font-size: 12px;
+}
+
+@media (max-width: 900px) {
+  .settings-page {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-right: none;
+    border-bottom: 1px solid #dbe4ef;
+  }
+}
+
+@media (max-width: 600px) {
+  .content-area {
+    padding: 12px;
+  }
+
+  .content-head h2 {
+    font-size: 18px;
+  }
+
+  .row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
