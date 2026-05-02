@@ -2,7 +2,11 @@ import type { ChromeApi } from '../shared/chrome-api'
 import type { LocalOcrLanguage, RunOffscreenTesseractOcrMessage } from '../shared/messages'
 import { extractTextByTesseractInOffscreen } from './tesseract-ocr'
 
+<<<<<<< HEAD
 const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
 
 function sanitizeRequestedLanguages(rawLanguages: unknown): LocalOcrLanguage[] {
   const validLanguageSet = new Set<LocalOcrLanguage>()
@@ -20,6 +24,7 @@ function sanitizeRequestedLanguages(rawLanguages: unknown): LocalOcrLanguage[] {
 
 // NOTE: 离屏文档只处理后台转发来的 Tesseract OCR 请求，避免误消费其他扩展消息。
 chromeApi.runtime.onMessage.addListener(
+<<<<<<< HEAD
   (message: RunOffscreenTesseractOcrMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
     if (message?.target !== 'offscreen' || message?.type !== 'RUN_OFFSCREEN_TESSERACT_OCR') {
       return false
@@ -27,6 +32,17 @@ chromeApi.runtime.onMessage.addListener(
 
     const imageDataUrl = String(message?.payload?.imageDataUrl ?? '')
     const languages = sanitizeRequestedLanguages(message?.payload?.languages)
+=======
+  (message: unknown, _sender: unknown, sendResponse: (response: unknown) => void) => {
+    const msg = message as RunOffscreenTesseractOcrMessage
+
+    if (msg?.target !== 'offscreen' || msg?.type !== 'RUN_OFFSCREEN_TESSERACT_OCR') {
+      return false
+    }
+
+    const imageDataUrl = String(msg?.payload?.imageDataUrl ?? '')
+    const languages = sanitizeRequestedLanguages(msg?.payload?.languages)
+>>>>>>> develop
 
     if (!imageDataUrl.startsWith('data:image/')) {
       sendResponse({ ok: false, error: '无效的离屏 OCR 图像数据' })

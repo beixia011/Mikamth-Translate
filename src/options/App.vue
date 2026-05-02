@@ -1,12 +1,20 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+<<<<<<< HEAD
 import { DEFAULT_TRANSLATION_PROMPT, getLlmConfig, saveLlmConfig, type ScreenshotTranslateMode } from '../shared/config'
+=======
+import { DEFAULT_PAGE_IMAGE_PROMPT, DEFAULT_TRANSLATION_PROMPT, getLlmConfig, saveLlmConfig, type ScreenshotTranslateMode } from '../shared/config'
+>>>>>>> develop
 
 // NOTE: 定义配置页导航模块，后续新增功能仅需补充此数组和对应内容区块。
 const sections = [
   { key: 'model', title: '模型服务', desc: '配置文本模型与视觉模型。' },
   { key: 'behavior', title: '翻译功能', desc: '配置基础翻译功能。' },
   { key: 'screenshot', title: '截图翻译', desc: '配置截图翻译模式与 OCR 参数。' },
+<<<<<<< HEAD
+=======
+  { key: 'image', title: '图片翻译', desc: '配置页面图片翻译模式与提示词。' },
+>>>>>>> develop
 ] as const
 
 type SectionKey = (typeof sections)[number]['key']
@@ -19,6 +27,7 @@ const textApiKey = ref('')
 const textSelectedModel = ref('')
 const textModelList = ref<string[]>([])
 const textAutoRefreshModels = ref(false)
+<<<<<<< HEAD
 
 // NOTE: 视觉模型配置，可选择复用文本模型配置。
 const useTextConfigForVision = ref(true)
@@ -37,6 +46,33 @@ const screenshotEnableFallback = ref(true)
 const screenshotMaxImageSide = ref(1800)
 const screenshotImageQualityPercent = ref(85)
 
+=======
+
+// NOTE: 视觉模型配置，可选择复用文本模型配置。
+const useTextConfigForVision = ref(true)
+const visionBaseUrl = ref('')
+const visionApiKey = ref('')
+const visionSelectedModel = ref('')
+const visionModelList = ref<string[]>([])
+const visionAutoRefreshModels = ref(false)
+
+// NOTE: 行为与截图相关配置。
+const translationTriggerMode = ref<'context_menu' | 'auto_selection'>('context_menu')
+const textRequestTimeoutSeconds = ref(180)
+const customTranslationPrompt = ref('')
+const screenshotTranslateMode = ref<ScreenshotTranslateMode>('vision_direct')
+const screenshotEnableFallback = ref(true)
+const screenshotRequestTimeoutSeconds = ref(180)
+const screenshotMaxImageSide = ref(1800)
+const screenshotImageQualityPercent = ref(85)
+
+// NOTE: 页面图片翻译配置。
+const imageTranslateMode = ref<ScreenshotTranslateMode>('vision_direct')
+const imageEnableFallback = ref(true)
+const imageCustomPrompt = ref('')
+const imageRequestTimeoutSeconds = ref(180)
+
+>>>>>>> develop
 // NOTE: 页面提示信息，用于展示刷新/保存结果。
 const message = ref('')
 const saving = ref(false)
@@ -201,10 +237,11 @@ onMounted(async () => {
   visionModelList.value = config.visionModelList
   visionAutoRefreshModels.value = config.visionAutoRefreshModels
   translationTriggerMode.value = config.translationTriggerMode
-  requestTimeoutSeconds.value = Math.max(5, Math.round(config.requestTimeoutMs / 1000))
+  textRequestTimeoutSeconds.value = Math.max(5, Math.round(config.textRequestTimeoutMs / 1000))
   customTranslationPrompt.value = config.customTranslationPrompt
   screenshotTranslateMode.value = config.screenshotTranslateMode
   screenshotEnableFallback.value = config.screenshotEnableFallback
+<<<<<<< HEAD
   screenshotMaxImageSide.value = config.screenshotMaxImageSide
   screenshotImageQualityPercent.value = Math.round(config.screenshotImageQuality * 100)
 })
@@ -213,6 +250,26 @@ watch([textBaseUrl, textApiKey], () => {
   scheduleTextAutoRefresh()
 })
 
+=======
+  screenshotRequestTimeoutSeconds.value = Math.max(5, Math.round(config.screenshotRequestTimeoutMs / 1000))
+  screenshotMaxImageSide.value = config.screenshotMaxImageSide
+  screenshotImageQualityPercent.value = Math.round(config.screenshotImageQuality * 100)
+  imageTranslateMode.value = config.imageTranslateMode
+  imageEnableFallback.value = config.imageEnableFallback
+  imageCustomPrompt.value = config.imageCustomPrompt
+  imageRequestTimeoutSeconds.value = Math.max(5, Math.round(config.imageRequestTimeoutMs / 1000))
+})
+
+// NOTE: 切换配置分区时清空旧提示，避免不同分区的消息串行显示。
+watch(activeSection, () => {
+  message.value = ''
+})
+
+watch([textBaseUrl, textApiKey], () => {
+  scheduleTextAutoRefresh()
+})
+
+>>>>>>> develop
 watch([visionBaseUrl, visionApiKey], () => {
   scheduleVisionAutoRefresh()
 })
@@ -224,11 +281,23 @@ async function onSave(): Promise<void> {
 
   try {
     const currentConfig = await getLlmConfig()
+<<<<<<< HEAD
     const safeSeconds = Math.max(5, Math.min(600, Math.round(Number(requestTimeoutSeconds.value) || 180)))
     const safeImageSide = Math.max(600, Math.min(4096, Math.round(Number(screenshotMaxImageSide.value) || 1800)))
     const safeImageQualityPercent = Math.max(40, Math.min(100, Math.round(Number(screenshotImageQualityPercent.value) || 85)))
 
     requestTimeoutSeconds.value = safeSeconds
+=======
+    const safeTextSeconds = Math.max(5, Math.min(600, Math.round(Number(textRequestTimeoutSeconds.value) || 180)))
+    const safeScreenshotSeconds = Math.max(5, Math.min(600, Math.round(Number(screenshotRequestTimeoutSeconds.value) || 180)))
+    const safeImageSeconds = Math.max(5, Math.min(600, Math.round(Number(imageRequestTimeoutSeconds.value) || 180)))
+    const safeImageSide = Math.max(600, Math.min(4096, Math.round(Number(screenshotMaxImageSide.value) || 1800)))
+    const safeImageQualityPercent = Math.max(40, Math.min(100, Math.round(Number(screenshotImageQualityPercent.value) || 85)))
+
+    textRequestTimeoutSeconds.value = safeTextSeconds
+    screenshotRequestTimeoutSeconds.value = safeScreenshotSeconds
+    imageRequestTimeoutSeconds.value = safeImageSeconds
+>>>>>>> develop
     screenshotMaxImageSide.value = safeImageSide
     screenshotImageQualityPercent.value = safeImageQualityPercent
 
@@ -247,11 +316,23 @@ async function onSave(): Promise<void> {
       translationTriggerMode: translationTriggerMode.value,
       targetLanguage: currentConfig.targetLanguage,
       customTranslationPrompt: customTranslationPrompt.value,
+<<<<<<< HEAD
       requestTimeoutMs: safeSeconds * 1000,
+=======
+      textRequestTimeoutMs: safeTextSeconds * 1000,
+      screenshotRequestTimeoutMs: safeScreenshotSeconds * 1000,
+      imageRequestTimeoutMs: safeImageSeconds * 1000,
+>>>>>>> develop
       screenshotTranslateMode: screenshotTranslateMode.value,
       screenshotEnableFallback: screenshotEnableFallback.value,
       screenshotMaxImageSide: safeImageSide,
       screenshotImageQuality: safeImageQualityPercent / 100,
+<<<<<<< HEAD
+=======
+      imageTranslateMode: imageTranslateMode.value,
+      imageEnableFallback: imageEnableFallback.value,
+      imageCustomPrompt: imageCustomPrompt.value,
+>>>>>>> develop
     })
 
     message.value = '配置已保存'
@@ -383,8 +464,8 @@ async function onSave(): Promise<void> {
           </div>
 
           <label class="field">
-            <span>请求超时（秒）</span>
-            <input v-model.number="requestTimeoutSeconds" type="number" min="5" max="600" />
+            <span>文本翻译超时（秒）</span>
+            <input v-model.number="textRequestTimeoutSeconds" type="number" min="5" max="600" />
           </label>
 
           <label class="field">
@@ -396,7 +477,7 @@ async function onSave(): Promise<void> {
             />
           </label>
 
-          <p class="hint">当前范围：5~600 秒，默认 180 秒（3 分钟）。</p>
+          <p class="hint">超时范围：5~600 秒，默认 180 秒（3 分钟）。</p>
           <p class="hint">默认 Prompt：{{ DEFAULT_TRANSLATION_PROMPT }}</p>
           <p class="hint warning">请谨慎设置 prompt，防止输出的内容错误。</p>
         </template>
@@ -437,11 +518,69 @@ async function onSave(): Promise<void> {
                 <input v-model.number="screenshotImageQualityPercent" type="number" min="40" max="100" />
               </label>
             </div>
+<<<<<<< HEAD
+=======
+
+            <label class="field">
+              <span>截图翻译超时（秒）</span>
+              <input v-model.number="screenshotRequestTimeoutSeconds" type="number" min="5" max="600" />
+            </label>
+>>>>>>> develop
           </div>
 
           <p class="hint">
             LLM 视觉能力识别实现位置：`src/background/llm-client.ts` 的 `isVisionUnsupportedError`。
           </p>
+<<<<<<< HEAD
+=======
+          <p class="hint">超时范围：5~600 秒，默认 180 秒（3 分钟）。</p>
+        </template>
+
+        <template v-else-if="activeSection === 'image'">
+          <label class="checkbox screenshot-fallback">
+            <input v-model="imageEnableFallback" type="checkbox" />
+            <span>失败自动降级（vision -> ocr_local）</span>
+          </label>
+
+          <div class="field-group">
+            <span class="label">图片翻译模式</span>
+            <p class="hint">推荐使用视觉模型直译，方便更好的理解翻译上下文</p>
+            <label class="radio-item">
+              <input v-model="imageTranslateMode" type="radio" value="vision_direct" />
+              <span>视觉模型直译（推荐）</span>
+            </label>
+            <label class="radio-item">
+              <input v-model="imageTranslateMode" type="radio" value="ocr_local" />
+              <span>本地 OCR 识别后走文本翻译</span>
+            </label>
+          </div>
+
+          <template v-if="imageTranslateMode === 'vision_direct'">
+            <p class="hint">视觉模型参数在"模型服务 -> 视觉模型配置"中维护。</p>
+            <br>
+            <label class="field">
+              <span>图片翻译 Prompt（留空则使用默认 Prompt）</span>
+              <textarea
+                v-model="imageCustomPrompt"
+                rows="5"
+                placeholder="可按需填写自定义 prompt；留空时自动使用默认 prompt。"
+              />
+            </label>
+            <br>
+            <p class="hint">默认 Prompt：{{ DEFAULT_PAGE_IMAGE_PROMPT }}</p>
+          </template>
+
+          <template v-else>
+            <p class="hint">本地 OCR 识别后走文本翻译，翻译 Prompt 在"翻译功能"中设置。</p>
+          </template>
+
+          <label class="field">
+            <span>图片翻译超时（秒）</span>
+            <input v-model.number="imageRequestTimeoutSeconds" type="number" min="5" max="600" />
+          </label>
+
+          <p class="hint">超时范围：5~600 秒，默认 180 秒（3 分钟）。</p>
+>>>>>>> develop
         </template>
 
         <div class="actions">
@@ -454,7 +593,11 @@ async function onSave(): Promise<void> {
       </div>
 
       <footer class="page-footer">
+<<<<<<< HEAD
         Mikamth Translate V0.2 Beta Version Version Update time: 2026.4.22 Newest Version: V0.2 Beta Version
+=======
+        Mikamth Translate V0.3 Beta Version / Version Update time: 2026.4.30 / Newest Version: V0.3 Beta Version
+>>>>>>> develop
       </footer>
     </section>
   </main>

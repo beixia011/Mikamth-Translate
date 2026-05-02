@@ -2,9 +2,17 @@ import type { ChromeApi } from '../shared/chrome-api'
 import { getLlmConfig, type ScreenshotTranslateMode } from '../shared/config'
 import type {
   CaptureVisibleTabResponse,
+<<<<<<< HEAD
   TranslateScreenshotImageResponse,
   TranslateTextResponse,
   BackgroundToContentMessage,
+=======
+  TranslatePageImageResponse,
+  TranslateScreenshotImageResponse,
+  TranslateTextResponse,
+  BackgroundToContentMessage,
+  TranslatePageImageMessage,
+>>>>>>> develop
 } from '../shared/messages'
 import { extractTextByLocalOcrInPage } from './local-ocr'
 
@@ -24,6 +32,18 @@ const SCREENSHOT_MODE_LABELS: Record<ScreenshotTranslateMode, string> = {
 
 let latestTranslateTaskId = 0
 let leaveScreenshotMode: (() => void) | null = null
+<<<<<<< HEAD
+=======
+let pendingImageElement: HTMLImageElement | null = null
+
+// NOTE: 翻译面板拖拽状态，避免拖拽移动面板时误触发关闭。
+let isDraggingPanel = false
+let panelDragOffsetX = 0
+let panelDragOffsetY = 0
+const PANEL_DRAG_THRESHOLD = 3
+// NOTE: 保存用户拖拽后面板的最终位置，用于文案更新时恢复位置。
+let panelDragPosition: { left: string; top: string } | null = null
+>>>>>>> develop
 
 type AnchorPoint = {
   x: number
@@ -135,13 +155,84 @@ function createPanel(anchor: AnchorPoint, text: string): HTMLDivElement {
   panel.style.fontSize = '13px'
   panel.style.lineHeight = '1.5'
   panel.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.25)'
-  panel.style.whiteSpace = 'pre-wrap'
   panel.style.wordBreak = 'break-word'
-  panel.textContent = text
   panel.style.visibility = 'hidden'
+
+  // 顶部拖拽手柄条，按住拖拽可移动面板
+  const handle = document.createElement('div')
+  handle.style.height = '6px'
+  handle.style.background = 'rgba(255, 255, 255, 0.2)'
+  handle.style.borderRadius = '3px'
+  handle.style.marginBottom = '8px'
+  handle.style.cursor = 'grab'
+  panel.appendChild(handle)
+
+  // 文本内容容器
+  const content = document.createElement('div')
+  content.style.whiteSpace = 'pre-wrap'
+  content.textContent = text
+  panel.appendChild(content)
+
+  // NOTE: 仅手柄条可拖拽，文字区域保留正常的选中/复制行为。
+  handle.addEventListener('mousedown', (event) => {
+    if (event.button !== 0) {
+      return
+    }
+
+    isDraggingPanel = false
+    panelDragOffsetX = event.clientX - panel.offsetLeft
+    panelDragOffsetY = event.clientY - panel.offsetTop
+    handle.style.cursor = 'grabbing'
+    panel.style.userSelect = 'none'
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const dx = moveEvent.clientX - event.clientX
+      const dy = moveEvent.clientY - event.clientY
+
+      if (Math.abs(dx) > PANEL_DRAG_THRESHOLD || Math.abs(dy) > PANEL_DRAG_THRESHOLD) {
+        isDraggingPanel = true
+      }
+
+      const newLeft = moveEvent.clientX - panelDragOffsetX
+      const newTop = moveEvent.clientY - panelDragOffsetY
+
+      const maxLeft = window.innerWidth - panel.offsetWidth - 8
+      const maxTop = window.innerHeight - panel.offsetHeight - 8
+
+      panel.style.left = `${Math.max(8, Math.min(newLeft, maxLeft))}px`
+      panel.style.top = `${Math.max(8, Math.min(newTop, maxTop))}px`
+    }
+
+    const onMouseUp = () => {
+      handle.style.cursor = 'grab'
+      panel.style.userSelect = ''
+      document.removeEventListener('mousemove', onMouseMove)
+      document.removeEventListener('mouseup', onMouseUp)
+
+      if (isDraggingPanel) {
+        panelDragPosition = {
+          left: panel.style.left,
+          top: panel.style.top,
+        }
+        setTimeout(() => {
+          isDraggingPanel = false
+        }, 0)
+      }
+    }
+
+    document.addEventListener('mousemove', onMouseMove)
+    document.addEventListener('mouseup', onMouseUp)
+  })
 
   document.body.appendChild(panel)
   positionPanel(panel, anchor)
+
+  // NOTE: 若用户曾拖拽过面板，恢复拖拽后的位置，避免文案更新时跳回初始锚点。
+  if (panelDragPosition) {
+    panel.style.left = panelDragPosition.left
+    panel.style.top = panelDragPosition.top
+  }
+
   panel.style.visibility = 'visible'
 
   return panel
@@ -182,12 +273,63 @@ function getValidatedSelectionText(): SelectionValidationResult {
 }
 
 async function requestTranslation(text: string): Promise<TranslateTextResponse> {
+<<<<<<< HEAD
   const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
 
   return chromeApi.runtime.sendMessage({
     type: 'TRANSLATE_TEXT',
     payload: { text },
-  })
+  }) as Promise<TranslateTextResponse>
+}
+
+async function requestCaptureVisibleTab(): Promise<CaptureVisibleTabResponse> {
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+
+  return chromeApi.runtime.sendMessage({
+    type: 'CAPTURE_VISIBLE_TAB',
+  }) as Promise<CaptureVisibleTabResponse>
+}
+
+async function requestScreenshotTranslation(imageDataUrl: string): Promise<TranslateScreenshotImageResponse> {
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+
+  return chromeApi.runtime.sendMessage({
+    type: 'TRANSLATE_SCREENSHOT_IMAGE',
+    payload: { imageDataUrl },
+  }) as Promise<TranslateScreenshotImageResponse>
+}
+
+async function requestPageImageTranslation(payload: TranslatePageImageMessage['payload']): Promise<TranslatePageImageResponse> {
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+
+  return chromeApi.runtime.sendMessage({
+    type: 'TRANSLATE_PAGE_IMAGE',
+    payload,
+  }) as Promise<TranslatePageImageResponse>
+}
+
+function buildScreenshotProgressText(): string {
+  // NOTE: 截图处理完成后仅展示简洁的翻译中状态文案。
+  return '正在翻译中...'
+}
+
+function formatScreenshotFailureText(rawError: string): string {
+  const normalizedError = rawError
+    .trim()
+    .replace(/^(?:截图翻译失败[:：]\s*)+/u, '')
+
+  if (!normalizedError) {
+    return `${SCREENSHOT_ERROR_PREFIX}未知错误`
+  }
+
+  if (normalizedError.includes('\n')) {
+    return `${SCREENSHOT_ERROR_PREFIX}\n${normalizedError}`
+  }
+
+  return `${SCREENSHOT_ERROR_PREFIX}${normalizedError}`
 }
 
 async function requestCaptureVisibleTab(): Promise<CaptureVisibleTabResponse> {
@@ -472,6 +614,199 @@ async function translateScreenshotRect(rect: DragRect): Promise<void> {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function extractImageDataUrl(img: HTMLImageElement): Promise<string> {
+  // NOTE: 先尝试从 DOM 中已渲染的 <img> 直接绘入 canvas（同源图片可行）。
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      throw new Error('无法创建 Canvas 上下文')
+    }
+
+    context.drawImage(img, 0, 0)
+    // HACK: 跨域图片会导致 canvas 被污染，toDataURL 会抛出 SecurityError。
+    return canvas.toDataURL('image/jpeg', 0.85)
+  } catch {
+    // 跨域图片走 CORS 重载路径。
+  }
+
+  // NOTE: 通过 crossOrigin 重新加载图片，尝试绕过 canvas 污染问题。
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.crossOrigin = 'anonymous'
+
+    image.onload = () => {
+      try {
+        const canvas = document.createElement('canvas')
+        canvas.width = image.naturalWidth
+        canvas.height = image.naturalHeight
+
+        const context = canvas.getContext('2d')
+
+        if (!context) {
+          reject(new Error('无法创建 Canvas 上下文'))
+          return
+        }
+
+        context.drawImage(image, 0, 0)
+        resolve(canvas.toDataURL('image/jpeg', 0.85))
+      } catch (canvasError) {
+        reject(canvasError)
+      }
+    }
+
+    image.onerror = () => reject(new Error('CANVAS_FALLBACK'))
+    image.src = img.currentSrc || img.src
+  })
+}
+
+// NOTE: 内容脚本侧 fetch 获取图片，可携带页面 cookie/认证信息，
+// 解决背景 Service Worker fetch 因缺少登录态而失败的问题。
+async function extractImageViaFetch(img: HTMLImageElement): Promise<string> {
+  const src = img.currentSrc || img.src
+
+  if (!src || src.startsWith('blob:') || src.startsWith('data:')) {
+    throw new Error('无法通过 fetch 获取该图片')
+  }
+
+  const response = await fetch(src)
+
+  if (!response.ok) {
+    throw new Error(`图片请求失败：${response.status}`)
+  }
+
+  const blob = await response.blob()
+
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('图片数据读取失败'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+// NOTE: 通过 captureVisibleTab 截取页面上已渲染的图片区域，完全绕过 CORS 和防盗链限制。
+// 这是最后的回退方案——图片数据已存在于浏览器渲染结果中，直接"截图"获取。
+async function captureAndCropImage(img: HTMLImageElement): Promise<string> {
+  // 先滚动确保图片可见
+  img.scrollIntoView({ block: 'nearest', behavior: 'instant' })
+
+  // 临时隐藏翻译面板，避免被截入图片
+  const panel = document.getElementById(PANEL_ID)
+  const prevDisplay = panel ? panel.style.display : undefined
+  if (panel) panel.style.display = 'none'
+
+  try {
+    const config = await getLlmConfig()
+    const captureResponse = await requestCaptureVisibleTab()
+
+    if (!captureResponse?.ok || !captureResponse?.imageDataUrl) {
+      throw new Error('可视区截图失败')
+    }
+
+    const rect = img.getBoundingClientRect()
+    const imgRect: DragRect = {
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+    }
+
+    return await cropAndCompressImage(
+      captureResponse.imageDataUrl,
+      imgRect,
+      config.screenshotMaxImageSide,
+      config.screenshotImageQuality,
+    )
+  } finally {
+    if (panel) panel.style.display = prevDisplay || ''
+  }
+}
+
+async function handleImageTranslate(): Promise<void> {
+  if (!pendingImageElement) {
+    showTranslationResult('翻译失败：未检测到目标图片，请右键点击图片重试', getDefaultAnchor())
+    return
+  }
+
+  const img = pendingImageElement
+  const rect = img.getBoundingClientRect()
+  const anchor: AnchorPoint = {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  }
+
+  const taskId = ++latestTranslateTaskId
+
+  try {
+    createPanel(anchor, '正在提取图片...')
+
+    let imagePayload: TranslatePageImageMessage['payload']
+
+    try {
+      const dataUrl = await extractImageDataUrl(img)
+      imagePayload = { imageDataUrl: dataUrl, pageUrl: window.location.href }
+    } catch (_extractError) {
+      // NOTE: canvas 提取失败时，依次尝试：内容脚本 fetch → 可视区截图裁剪 → 后台 fetch。
+      const src = img.currentSrc || img.src
+
+      if (!src || src.startsWith('blob:')) {
+        throw new Error('无法获取该图片数据，请尝试截图翻译')
+      }
+
+      // PREF: 先尝试内容脚本侧 fetch（带页面上下文、Referer、cookie）。
+      try {
+        const dataUrl = await extractImageViaFetch(img)
+        imagePayload = { imageDataUrl: dataUrl, pageUrl: window.location.href }
+      } catch {
+        // PREF: fetch 也失败时，直接截取页面已渲染的图片区域，彻底绕过 CORS 与防盗链。
+        try {
+          const croppedDataUrl = await captureAndCropImage(img)
+          imagePayload = { imageDataUrl: croppedDataUrl, pageUrl: window.location.href }
+        } catch {
+          // PREF: 最后回退到 URL 方式，由后台 fetch（带 Referer 头）尝试获取。
+          imagePayload = { imageUrl: src, pageUrl: window.location.href }
+        }
+      }
+    }
+
+    if (taskId !== latestTranslateTaskId) {
+      return
+    }
+
+    createPanel(anchor, '正在翻译中...')
+
+    const response = await requestPageImageTranslation(imagePayload)
+
+    if (taskId !== latestTranslateTaskId) {
+      return
+    }
+
+    if (!response?.ok) {
+      createPanel(anchor, `图片翻译失败：${response?.error ?? '未知错误'}`)
+      return
+    }
+
+    const modeLabel = response?.usedMode ? SCREENSHOT_MODE_LABELS[response.usedMode] : '图片翻译'
+    const resultText = response?.translation ?? '翻译结果为空'
+    createPanel(anchor, `模式：${modeLabel}\n\n${resultText}`)
+  } catch (error) {
+    if (taskId !== latestTranslateTaskId) {
+      return
+    }
+
+    const errorMessage = error instanceof Error ? error.message : '未知错误'
+    createPanel(anchor, `图片翻译失败：${errorMessage}`)
+  }
+}
+
+>>>>>>> develop
 function startScreenshotMode(): void {
   // NOTE: 进入截图模式前清理旧面板和旧任务，避免旧状态干扰框选。
   latestTranslateTaskId += 1
@@ -569,6 +904,20 @@ async function shouldAutoTranslate(): Promise<boolean> {
   return config.translationTriggerMode === 'auto_selection'
 }
 
+<<<<<<< HEAD
+=======
+// NOTE: 记录右键点击的图片元素，供图片翻译功能使用。
+document.addEventListener('contextmenu', (event) => {
+  const target = event.target as HTMLElement | null
+
+  if (target?.tagName === 'IMG') {
+    pendingImageElement = target as HTMLImageElement
+  } else {
+    pendingImageElement = null
+  }
+})
+
+>>>>>>> develop
 // NOTE: 在鼠标抬起后按配置触发自动划词翻译，减少与页面选择行为冲突。
 document.addEventListener('mouseup', () => {
   window.setTimeout(async () => {
@@ -588,23 +937,48 @@ document.addEventListener('mouseup', () => {
   }, 20)
 })
 
+<<<<<<< HEAD
 const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
 
 // NOTE: 接收后台右键指令与本地 OCR 调用，统一在页面上下文中处理。
 chromeApi.runtime.onMessage.addListener((message: BackgroundToContentMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
   if (message?.type === 'CONTEXT_MENU_TRANSLATE') {
     const fallbackText = String(message?.payload?.text ?? '')
+=======
+const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+
+// NOTE: 接收后台右键指令与本地 OCR 调用，统一在页面上下文中处理。
+chromeApi.runtime.onMessage.addListener((message: unknown, _sender: unknown, sendResponse: (response: unknown) => void) => {
+  const msg = message as BackgroundToContentMessage
+
+  if (msg?.type === 'CONTEXT_MENU_TRANSLATE') {
+    const fallbackText = String(msg?.payload?.text ?? '')
+>>>>>>> develop
     void handleContextMenuTranslate(fallbackText)
     return
   }
 
+<<<<<<< HEAD
   if (message?.type === 'START_SCREENSHOT_TRANSLATE') {
+=======
+  if (msg?.type === 'START_SCREENSHOT_TRANSLATE') {
+>>>>>>> develop
     startScreenshotMode()
     return
   }
 
+<<<<<<< HEAD
   if (message?.type === 'RUN_LOCAL_OCR') {
     const imageDataUrl = String(message?.payload?.imageDataUrl ?? '')
+=======
+  if (msg?.type === 'START_IMAGE_TRANSLATE') {
+    void handleImageTranslate()
+    return
+  }
+
+  if (msg?.type === 'RUN_LOCAL_OCR') {
+    const imageDataUrl = String(msg?.payload?.imageDataUrl ?? '')
+>>>>>>> develop
 
     if (!imageDataUrl.startsWith('data:image/')) {
       sendResponse({ ok: false, error: '无效的本地 OCR 图像数据' })
@@ -625,7 +999,15 @@ chromeApi.runtime.onMessage.addListener((message: BackgroundToContentMessage, _s
 })
 
 // NOTE: 点击面板外部时关闭浮层，并取消当前未完成任务的界面回写。
+<<<<<<< HEAD
+=======
+// 拖拽面板时不触发关闭，避免移动面板后误关。
+>>>>>>> develop
 document.addEventListener('mousedown', (event) => {
+  if (isDraggingPanel) {
+    return
+  }
+
   const panel = document.getElementById(PANEL_ID)
 
   if (!panel) {
@@ -633,6 +1015,7 @@ document.addEventListener('mousedown', (event) => {
   }
 
   if (!panel.contains(event.target as Node)) {
+    panelDragPosition = null
     latestTranslateTaskId += 1
     removePanel()
   }
@@ -641,6 +1024,7 @@ document.addEventListener('mousedown', (event) => {
 // NOTE: 按下 Esc 时同时关闭浮层并退出截图模式。
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
+    panelDragPosition = null
     latestTranslateTaskId += 1
     removePanel()
 

@@ -10,12 +10,20 @@ export type TranslationTargetLanguage =
   | 'german'
   | 'spanish'
 
+<<<<<<< HEAD
 // NOTE: 定义截图翻译模式，当前支持视觉直译与本地 OCR。
+=======
+// NOTE: 定义图片类翻译模式（截图翻译与页面图片翻译共用），当前支持视觉直译与本地 OCR。
+>>>>>>> develop
 export type ScreenshotTranslateMode = 'vision_direct' | 'ocr_local'
 
 // NOTE: 默认翻译提示词作为统一基线，目标语言仅通过追加短句控制。
 export const DEFAULT_TRANSLATION_PROMPT =
   '你是专业翻译助手。请将用户提供的文本翻译为自然、准确、简洁的内容。仅输出翻译结果，不要添加解释。'
+
+// NOTE: 页面图片视觉翻译默认提示词，侧重理解图片语境再翻译。
+export const DEFAULT_PAGE_IMAGE_PROMPT =
+  '你是专业图片翻译助手。请先理解图片的语境（梗图/信息图/漫画/照片等），然后结合画面上下文翻译其中的文字。保留原图的风格与语气。仅输出翻译结果，不要添加解释。'
 
 export interface LlmConfig {
   textBaseUrl: string
@@ -32,11 +40,25 @@ export interface LlmConfig {
   translationTriggerMode: 'context_menu' | 'auto_selection'
   targetLanguage: TranslationTargetLanguage
   customTranslationPrompt: string
+<<<<<<< HEAD
   requestTimeoutMs: number
+=======
+  /** @deprecated 已拆分为 textRequestTimeoutMs / screenshotRequestTimeoutMs / imageRequestTimeoutMs，读取时自动迁移 */
+  requestTimeoutMs?: number
+  textRequestTimeoutMs: number
+  screenshotRequestTimeoutMs: number
+  imageRequestTimeoutMs: number
+>>>>>>> develop
   screenshotTranslateMode: ScreenshotTranslateMode
   screenshotEnableFallback: boolean
   screenshotMaxImageSide: number
   screenshotImageQuality: number
+<<<<<<< HEAD
+=======
+  imageTranslateMode: ScreenshotTranslateMode
+  imageEnableFallback: boolean
+  imageCustomPrompt: string
+>>>>>>> develop
 }
 
 // NOTE: 统一默认值，避免 storage 中字段缺失时出现 undefined。
@@ -55,11 +77,24 @@ export const DEFAULT_LLM_CONFIG: LlmConfig = {
   translationTriggerMode: 'context_menu',
   targetLanguage: 'chinese',
   customTranslationPrompt: '',
+<<<<<<< HEAD
   requestTimeoutMs: 180000,
+=======
+  requestTimeoutMs: undefined,
+  textRequestTimeoutMs: 180000,
+  screenshotRequestTimeoutMs: 180000,
+  imageRequestTimeoutMs: 180000,
+>>>>>>> develop
   screenshotTranslateMode: 'vision_direct',
   screenshotEnableFallback: true,
   screenshotMaxImageSide: 1800,
   screenshotImageQuality: 0.85,
+<<<<<<< HEAD
+=======
+  imageTranslateMode: 'vision_direct',
+  imageEnableFallback: true,
+  imageCustomPrompt: '',
+>>>>>>> develop
 }
 
 const STORAGE_DEFAULTS_WITH_LEGACY_FIELDS = {
@@ -71,6 +106,10 @@ const STORAGE_DEFAULTS_WITH_LEGACY_FIELDS = {
   modelList: [],
   autoRefreshModels: false,
   screenshotVisionModel: '',
+<<<<<<< HEAD
+=======
+  // HACK: 旧字段 requestTimeoutMs 已废弃，通过 getLlmConfig 迁移为 textRequestTimeoutMs。
+>>>>>>> develop
 }
 
 const REMOVED_SCREENSHOT_CONFIG_KEYS = ['cloudOcrEndpoint', 'cloudOcrApiKey', 'cloudOcrTimeoutMs'] as const
@@ -126,6 +165,16 @@ function sanitizeCustomTranslationPrompt(rawPrompt: unknown): string {
   return prompt.slice(0, 4000)
 }
 
+<<<<<<< HEAD
+=======
+function sanitizeImageCustomPrompt(rawPrompt: unknown): string {
+  const prompt = String(rawPrompt ?? '').trim()
+
+  // NOTE: 图片翻译自定义提示词与文本翻译提示词长度限制保持一致。
+  return prompt.slice(0, 4000)
+}
+
+>>>>>>> develop
 function sanitizeScreenshotTranslateMode(rawMode: unknown): ScreenshotTranslateMode {
   // NOTE: 截图模式仅允许当前启用的固定值，异常值回退到视觉直译。
   if (rawMode === 'ocr_local') {
@@ -166,7 +215,7 @@ function sanitizeRequestTimeoutMs(rawTimeoutMs: unknown): number {
 
   // NOTE: 限制超时范围，防止异常值导致”立即超时”或超长悬挂。
   if (!Number.isFinite(parsed)) {
-    return DEFAULT_LLM_CONFIG.requestTimeoutMs
+    return DEFAULT_LLM_CONFIG.textRequestTimeoutMs
   }
 
   const rounded = Math.round(parsed)
@@ -178,7 +227,11 @@ function sanitizeRequestTimeoutMs(rawTimeoutMs: unknown): number {
 
 // NOTE: 从浏览器存储读取配置，读取失败时回落到默认值，并兼容旧字段。
 export async function getLlmConfig(): Promise<LlmConfig> {
+<<<<<<< HEAD
   const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
   if (!chromeApi?.storage?.sync?.get) {
     return DEFAULT_LLM_CONFIG
   }
@@ -211,6 +264,15 @@ export async function getLlmConfig(): Promise<LlmConfig> {
   const visionSelectedModel = sanitizeModelName(stored.visionSelectedModel ?? legacyScreenshotVisionModel)
   const visionModelList = sanitizeModelList(stored.visionModelList ?? [])
   const visionAutoRefreshModels = Boolean(stored.visionAutoRefreshModels ?? DEFAULT_LLM_CONFIG.visionAutoRefreshModels)
+<<<<<<< HEAD
+=======
+
+  // NOTE: 旧字段 requestTimeoutMs 统一迁移为 textRequestTimeoutMs，各翻译类型独立超时字段优先。
+  const legacyRequestTimeoutMs = sanitizeRequestTimeoutMs(stored.requestTimeoutMs ?? undefined)
+  const textRequestTimeoutMs = sanitizeRequestTimeoutMs(stored.textRequestTimeoutMs ?? legacyRequestTimeoutMs)
+  const screenshotRequestTimeoutMs = sanitizeRequestTimeoutMs(stored.screenshotRequestTimeoutMs ?? stored.requestTimeoutMs ?? DEFAULT_LLM_CONFIG.screenshotRequestTimeoutMs)
+  const imageRequestTimeoutMs = sanitizeRequestTimeoutMs(stored.imageRequestTimeoutMs ?? stored.requestTimeoutMs ?? DEFAULT_LLM_CONFIG.imageRequestTimeoutMs)
+>>>>>>> develop
 
   return {
     textBaseUrl,
@@ -227,17 +289,33 @@ export async function getLlmConfig(): Promise<LlmConfig> {
     translationTriggerMode: sanitizeTranslationTriggerMode(stored.translationTriggerMode),
     targetLanguage: sanitizeTargetLanguage(stored.targetLanguage),
     customTranslationPrompt: sanitizeCustomTranslationPrompt(stored.customTranslationPrompt),
+<<<<<<< HEAD
     requestTimeoutMs: sanitizeRequestTimeoutMs(stored.requestTimeoutMs),
+=======
+    textRequestTimeoutMs,
+    screenshotRequestTimeoutMs,
+    imageRequestTimeoutMs,
+>>>>>>> develop
     screenshotTranslateMode: sanitizeScreenshotTranslateMode(stored.screenshotTranslateMode),
     screenshotEnableFallback: Boolean(stored.screenshotEnableFallback ?? DEFAULT_LLM_CONFIG.screenshotEnableFallback),
     screenshotMaxImageSide: sanitizeScreenshotMaxImageSide(stored.screenshotMaxImageSide),
     screenshotImageQuality: sanitizeScreenshotImageQuality(stored.screenshotImageQuality),
+<<<<<<< HEAD
+=======
+    imageTranslateMode: sanitizeScreenshotTranslateMode(stored.imageTranslateMode),
+    imageEnableFallback: Boolean(stored.imageEnableFallback ?? DEFAULT_LLM_CONFIG.imageEnableFallback),
+    imageCustomPrompt: sanitizeImageCustomPrompt(stored.imageCustomPrompt),
+>>>>>>> develop
   }
 }
 
 // NOTE: 保存配置前做基础清洗，保证存储值可直接用于请求。
 export async function saveLlmConfig(config: LlmConfig): Promise<void> {
+<<<<<<< HEAD
   const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+  const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
   if (!chromeApi?.storage?.sync?.set) {
     return
   }
@@ -269,11 +347,23 @@ export async function saveLlmConfig(config: LlmConfig): Promise<void> {
     translationTriggerMode: sanitizeTranslationTriggerMode(config.translationTriggerMode),
     targetLanguage: sanitizeTargetLanguage(config.targetLanguage),
     customTranslationPrompt: sanitizeCustomTranslationPrompt(config.customTranslationPrompt),
+<<<<<<< HEAD
     requestTimeoutMs: sanitizeRequestTimeoutMs(config.requestTimeoutMs),
+=======
+    textRequestTimeoutMs: sanitizeRequestTimeoutMs(config.textRequestTimeoutMs),
+    screenshotRequestTimeoutMs: sanitizeRequestTimeoutMs(config.screenshotRequestTimeoutMs),
+    imageRequestTimeoutMs: sanitizeRequestTimeoutMs(config.imageRequestTimeoutMs),
+>>>>>>> develop
     screenshotTranslateMode: sanitizeScreenshotTranslateMode(config.screenshotTranslateMode),
     screenshotEnableFallback: Boolean(config.screenshotEnableFallback),
     screenshotMaxImageSide: sanitizeScreenshotMaxImageSide(config.screenshotMaxImageSide),
     screenshotImageQuality: sanitizeScreenshotImageQuality(config.screenshotImageQuality),
+<<<<<<< HEAD
+=======
+    imageTranslateMode: sanitizeScreenshotTranslateMode(config.imageTranslateMode),
+    imageEnableFallback: Boolean(config.imageEnableFallback),
+    imageCustomPrompt: sanitizeImageCustomPrompt(config.imageCustomPrompt),
+>>>>>>> develop
     // HACK: 继续写入旧字段，便于平滑兼容历史实现与回滚。
     baseUrl: sanitizedTextBaseUrl,
     apiKey: sanitizedTextApiKey,
@@ -281,6 +371,10 @@ export async function saveLlmConfig(config: LlmConfig): Promise<void> {
     modelList: sanitizedTextModelList,
     autoRefreshModels: sanitizedTextAutoRefreshModels,
     screenshotVisionModel: sanitizedVisionSelectedModel,
+<<<<<<< HEAD
+=======
+    requestTimeoutMs: sanitizeRequestTimeoutMs(config.textRequestTimeoutMs),
+>>>>>>> develop
   })
 
   // NOTE: 移除已废弃的云端 OCR 配置字段，避免存储中遗留无效数据。

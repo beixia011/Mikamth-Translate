@@ -11,12 +11,18 @@
   4. popup 页面可配置译文目标语言（通过追加短提示词实现）；
   5. options 页面可配置翻译 prompt（留空时回退默认 prompt）；
   6. 后台脚本统一请求大模型接口（OpenAI Chat Completions 兼容格式）。
+  7. 截图翻译：右键菜单触发截图框选 + 后台 LLM 翻译
+  8. 页面图片翻译：右键图片直接翻译，支持 vision_direct（视觉直译）和 ocr_local（本地 OCR + 文本翻译）双模式自动降级
+  9. 本地 OCR：优先使用浏览器内置 TextDetector，不可用时回退到 Tesseract.js（通过 Offscreen Document 运行）
 
-## 项目架构
+## 项目部分架构
 - src 目录：
   1. `src/main.ts`：popup 页 Vue 应用入口。
   2. `src/App.vue`：popup 页“功能中心”主界面（当前提供划词翻译方式切换、目标语言设置与快捷入口）。
   3. `src/style.css`：popup 页功能中心样式。
+- 离屏 OCR 模块
+  1. `src/offscreen/main.ts`：离屏文档消息入口，只接收后台转发来的 Tesseract OCR 请求。
+  2. `src/offscreen/tesseract-ocr.ts`：离屏 `Tesseract.js` 适配层，负责：
 - 划词翻译核心:
   1. `src/content/selection-translator.ts`：内容脚本，支持自动划词翻译与接收右键菜单翻译结果展示浮层。
   2. `src/background/index.ts`：后台脚本，处理翻译请求、注册右键菜单并响应“翻译所选文本”，支持“默认/自定义 prompt + 目标语言后缀”拼接逻辑。
@@ -27,8 +33,8 @@
   3. `src/options/style.css`：配置页样式。
 
 ## 开发中功能：
-- [ ] 网页内图片翻译
-- [ ] 网页截图翻译
+- [x] 网页内图片翻译
+- [x] 网页截图翻译
 - [ ] 全文翻译
 - [ ] 全文翻译输出PDF
 - [ ] 翻译内容分享

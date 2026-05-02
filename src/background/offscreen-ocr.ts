@@ -3,7 +3,11 @@ import type { LocalOcrLanguage, RunOffscreenTesseractOcrMessage, RunOffscreenTes
 
 const OFFSCREEN_DOCUMENT_PATH = 'offscreen.html'
 
+<<<<<<< HEAD
 const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
 
 let creatingOffscreenDocumentPromise: Promise<void> | null = null
 
@@ -79,7 +83,11 @@ export async function extractTextByOffscreenTesseract(
   let response: RunOffscreenTesseractOcrResponse | undefined
 
   try {
+<<<<<<< HEAD
     response = await chromeApi.runtime.sendMessage(message)
+=======
+    response = await chromeApi.runtime.sendMessage(message) as RunOffscreenTesseractOcrResponse | undefined
+>>>>>>> develop
   } catch (error) {
     const messageText = error instanceof Error ? error.message : '未知错误'
     throw new Error(`离屏 Tesseract OCR 通信失败：${messageText}`)

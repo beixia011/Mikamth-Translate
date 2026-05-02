@@ -2,17 +2,34 @@ import type {
   BackgroundToContentMessage,
   ContentToBackgroundMessage,
   ContextMenuTranslateMessage,
+<<<<<<< HEAD
   StartScreenshotTranslateMessage,
 } from '../shared/messages'
 import type { ChromeApi, ChromeTab, ContextMenuInfo } from '../shared/chrome-api'
 import { translateTextByLlm } from './llm-client'
 import { translateScreenshotByConfiguredMode } from './screenshot-translation'
+=======
+  StartImageTranslateMessage,
+  StartScreenshotTranslateMessage,
+  TranslatePageImageMessage,
+} from '../shared/messages'
+import type { ChromeApi, ChromeTab, ContextMenuInfo } from '../shared/chrome-api'
+import { getLlmConfig } from '../shared/config'
+import { translateTextByLlm } from './llm-client'
+import { translatePageImageByConfiguredMode, translateScreenshotByConfiguredMode } from './screenshot-translation'
+>>>>>>> develop
 
 const ROOT_CONTEXT_MENU_ID = 'my-translate-root'
 const TRANSLATE_CONTEXT_MENU_ID = 'translate-selected-text'
 const SCREENSHOT_CONTEXT_MENU_ID = 'translate-screenshot'
+<<<<<<< HEAD
 
 const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
+=======
+const IMAGE_TRANSLATE_CONTEXT_MENU_ID = 'translate-page-image'
+
+const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
+>>>>>>> develop
 
 function isNoReceivingEndError(error: unknown): boolean {
   const messageText = error instanceof Error ? error.message : String(error ?? '')
@@ -56,6 +73,16 @@ function ensureContextMenu(): void {
       title: '截图翻译',
       contexts: ['all'],
     })
+<<<<<<< HEAD
+=======
+
+    chromeApi.contextMenus.create({
+      id: IMAGE_TRANSLATE_CONTEXT_MENU_ID,
+      parentId: ROOT_CONTEXT_MENU_ID,
+      title: '翻译页面图片',
+      contexts: ['image'],
+    })
+>>>>>>> develop
   })
 }
 
@@ -137,6 +164,56 @@ function handleCaptureVisibleTabMessage(
   return true
 }
 
+<<<<<<< HEAD
+=======
+// NOTE: 在后台 Service Worker 中通过 OffscreenCanvas 将远程图片转为 dataUrl，绕过 CORS。
+// referer 用于构造 Referer 请求头，绕过图片服务器的防盗链检查。
+async function fetchImageAsDataUrl(imageUrl: string, referer?: string): Promise<string> {
+  if (imageUrl.startsWith('data:image/')) {
+    return imageUrl
+  }
+
+  const config = await getLlmConfig()
+  const headers: Record<string, string> = {}
+  if (referer) {
+    headers['Referer'] = referer
+  }
+  const response = await fetch(imageUrl, { headers })
+
+  if (!response.ok) {
+    throw new Error(`图片获取失败：${response.status}`)
+  }
+
+  const blob = await response.blob()
+  const imageBitmap = await createImageBitmap(blob)
+
+  const maxSide = config.screenshotMaxImageSide
+  const quality = config.screenshotImageQuality
+  const resizeRatio = Math.min(1, maxSide / Math.max(imageBitmap.width, imageBitmap.height))
+  const targetWidth = Math.max(1, Math.round(imageBitmap.width * resizeRatio))
+  const targetHeight = Math.max(1, Math.round(imageBitmap.height * resizeRatio))
+
+  const canvas = new OffscreenCanvas(targetWidth, targetHeight)
+  const context = canvas.getContext('2d')
+
+  if (!context) {
+    throw new Error('图片处理失败：无法创建离屏 Canvas')
+  }
+
+  context.drawImage(imageBitmap, 0, 0, targetWidth, targetHeight)
+  imageBitmap.close()
+
+  const processedBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality })
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(new Error('图片转换失败'))
+    reader.readAsDataURL(processedBlob)
+  })
+}
+
+>>>>>>> develop
 function handleTranslateScreenshotMessage(
   message: ContentToBackgroundMessage,
   sender: any,
@@ -170,6 +247,53 @@ function handleTranslateScreenshotMessage(
   return true
 }
 
+<<<<<<< HEAD
+=======
+function handleTranslatePageImageMessage(
+  message: ContentToBackgroundMessage,
+  sender: any,
+  sendResponse: (response: unknown) => void,
+): boolean {
+  if (message.type !== 'TRANSLATE_PAGE_IMAGE') {
+    return false
+  }
+
+  const msg = message as TranslatePageImageMessage
+  const imageUrl = String(msg?.payload?.imageUrl ?? '')
+  const imageDataUrl = String(msg?.payload?.imageDataUrl ?? '')
+  const pageUrl = String(msg?.payload?.pageUrl ?? '')
+  const tabId = typeof sender?.tab?.id === 'number' ? sender.tab.id : undefined
+
+  void (async () => {
+    try {
+      let finalDataUrl: string
+
+      if (imageDataUrl) {
+        finalDataUrl = imageDataUrl
+      } else if (imageUrl) {
+        finalDataUrl = await fetchImageAsDataUrl(imageUrl, pageUrl || undefined)
+      } else {
+        sendResponse({ ok: false, error: '无效的图片数据' })
+        return
+      }
+
+      const result = await translatePageImageByConfiguredMode(finalDataUrl, { tabId })
+
+      sendResponse({
+        ok: true,
+        translation: result.translation,
+        usedMode: result.usedMode,
+      })
+    } catch (error) {
+      const messageText = error instanceof Error ? error.message : '图片翻译失败'
+      sendResponse({ ok: false, error: messageText })
+    }
+  })()
+
+  return true
+}
+
+>>>>>>> develop
 // NOTE: 安装插件和浏览器启动后都尝试注册右键菜单。
 chromeApi.runtime.onInstalled.addListener(() => {
   ensureContextMenu()
@@ -181,6 +305,7 @@ chromeApi.runtime.onStartup.addListener(() => {
 
 ensureContextMenu()
 
+<<<<<<< HEAD
 // NOTE: 后台统一处理来自内容脚本的翻译、截图、截图翻译请求。
 chromeApi.runtime.onMessage.addListener((message: ContentToBackgroundMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
   if (handleTranslateTextMessage(message, sendResponse)) {
@@ -192,13 +317,36 @@ chromeApi.runtime.onMessage.addListener((message: ContentToBackgroundMessage, _s
   }
 
   if (handleTranslateScreenshotMessage(message, sender, sendResponse)) {
+=======
+// NOTE: 后台统一处理来自内容脚本的翻译、截图、截图翻译、图片翻译请求。
+chromeApi.runtime.onMessage.addListener((message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => {
+  const msg = message as ContentToBackgroundMessage
+
+  if (handleTranslateTextMessage(msg, sendResponse)) {
+    return true
+  }
+
+  if (handleCaptureVisibleTabMessage(msg, sender, sendResponse)) {
+    return true
+  }
+
+  if (handleTranslateScreenshotMessage(msg, sender, sendResponse)) {
+    return true
+  }
+
+  if (handleTranslatePageImageMessage(msg, sender, sendResponse)) {
+>>>>>>> develop
     return true
   }
 
   return false
 })
 
+<<<<<<< HEAD
 // NOTE: 处理网页右键菜单事件，分别触发文本翻译或截图翻译。
+=======
+// NOTE: 处理网页右键菜单事件，分别触发文本翻译、截图翻译或页面图片翻译。
+>>>>>>> develop
 chromeApi.contextMenus.onClicked.addListener((info: ContextMenuInfo, tab?: ChromeTab) => {
   const tabId = typeof tab?.id === 'number' ? tab.id : null
 
@@ -227,5 +375,17 @@ chromeApi.contextMenus.onClicked.addListener((info: ContextMenuInfo, tab?: Chrom
     }
 
     void safeSendMessageToTab(tabId, message)
+<<<<<<< HEAD
+=======
+    return
+  }
+
+  if (info?.menuItemId === IMAGE_TRANSLATE_CONTEXT_MENU_ID) {
+    const message: StartImageTranslateMessage = {
+      type: 'START_IMAGE_TRANSLATE',
+    }
+
+    void safeSendMessageToTab(tabId, message)
+>>>>>>> develop
   }
 })
