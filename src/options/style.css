@@ -1,4 +1,4 @@
-/* 中文注释：配置页重构为“侧边栏 + 内容区 + Footer”三段式结构，便于后续模块扩展。 */
+/* NOTE: 配置页重构为”侧边栏 + 内容区 + Footer”三段式结构，便于后续模块扩展。 */
 :root {
   font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
   color: #1f2937;
@@ -13,11 +13,22 @@ body {
   margin: 0;
 }
 
+/* NOTE: 将根节点高度固定到视口，避免页面整体滚动。 */
+html,
+body,
+#app {
+  height: 100%;
+}
+
 .settings-page {
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100vh;
+  height: 100dvh;
   display: grid;
   grid-template-columns: 280px 1fr;
   background: linear-gradient(125deg, #eef5ff 0%, #f6f0e8 100%);
+  overflow: hidden;
 }
 
 .sidebar {
@@ -28,6 +39,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
 }
 
 .brand h1 {
@@ -83,6 +97,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
 }
 
 .content-head {
@@ -111,6 +128,25 @@ body {
   padding: 16px;
 }
 
+.subsection {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px;
+  background: #f8fafc;
+  margin-bottom: 14px;
+}
+
+.subsection h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: #1e293b;
+}
+
+.subsection.compact {
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
 .field {
   display: grid;
   gap: 8px;
@@ -120,6 +156,11 @@ body {
 .field span {
   font-size: 13px;
   color: #334155;
+}
+
+.field.field-inline {
+  margin-bottom: 0;
+  flex: 1;
 }
 
 .field input,
@@ -172,6 +213,15 @@ body {
   font-size: 13px;
   color: #334155;
   font-weight: 600;
+}
+
+.hint-inline {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.screenshot-fallback {
+  margin-bottom: 12px;
 }
 
 button {
@@ -254,11 +304,22 @@ button:disabled {
 @media (max-width: 900px) {
   .settings-page {
     grid-template-columns: 1fr;
+    height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   .sidebar {
     border-right: none;
     border-bottom: 1px solid #dbe4ef;
+    height: auto;
+    overflow: visible;
+  }
+
+  .content-area {
+    height: auto;
+    overflow: visible;
   }
 }
 

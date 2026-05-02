@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import type { ChromeApi } from './shared/chrome-api'
 import { getLlmConfig, saveLlmConfig, type TranslationTargetLanguage } from './shared/config'
 
-// 中文注释：以模块化卡片组织 popup 页面，便于后续继续扩展新功能。
+// NOTE: 以模块化卡片组织 popup 页面，便于后续继续扩展新功能。
 const featureCards = [
   {
     key: 'translate-method',
@@ -57,7 +58,7 @@ onMounted(async () => {
   targetLanguage.value = config.targetLanguage
 })
 
-// 中文注释：仅更新触发模式字段，避免覆盖其他配置项。
+// NOTE: 仅更新触发模式字段，避免覆盖其他配置项。
 async function saveTriggerMode(): Promise<void> {
   saving.value = true
   message.value = ''
@@ -79,7 +80,7 @@ async function saveTriggerMode(): Promise<void> {
   }
 }
 
-// 中文注释：仅更新目标语言字段，翻译时会在基础 prompt 后追加对应短提示词。
+// NOTE: 仅更新目标语言字段，翻译时会在基础 prompt 后追加对应短提示词。
 async function saveTargetLanguage(): Promise<void> {
   saving.value = true
   message.value = ''
@@ -101,9 +102,9 @@ async function saveTargetLanguage(): Promise<void> {
   }
 }
 
-// 中文注释：在 popup 页面提供“打开配置”的快捷入口。
+// NOTE: 在 popup 页面提供”打开配置”的快捷入口。
 function openOptions(): void {
-  const chromeApi = (globalThis as any).chrome
+  const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
 
   if (chromeApi?.runtime?.openOptionsPage) {
     chromeApi.runtime.openOptionsPage()
