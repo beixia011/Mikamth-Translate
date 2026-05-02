@@ -2,17 +2,11 @@ import type { ChromeApi } from '../shared/chrome-api'
 import { getLlmConfig, type ScreenshotTranslateMode } from '../shared/config'
 import type {
   CaptureVisibleTabResponse,
-<<<<<<< HEAD
-  TranslateScreenshotImageResponse,
-  TranslateTextResponse,
-  BackgroundToContentMessage,
-=======
   TranslatePageImageResponse,
   TranslateScreenshotImageResponse,
   TranslateTextResponse,
   BackgroundToContentMessage,
   TranslatePageImageMessage,
->>>>>>> develop
 } from '../shared/messages'
 import { extractTextByLocalOcrInPage } from './local-ocr'
 
@@ -32,8 +26,6 @@ const SCREENSHOT_MODE_LABELS: Record<ScreenshotTranslateMode, string> = {
 
 let latestTranslateTaskId = 0
 let leaveScreenshotMode: (() => void) | null = null
-<<<<<<< HEAD
-=======
 let pendingImageElement: HTMLImageElement | null = null
 
 // NOTE: 翻译面板拖拽状态，避免拖拽移动面板时误触发关闭。
@@ -43,7 +35,6 @@ let panelDragOffsetY = 0
 const PANEL_DRAG_THRESHOLD = 3
 // NOTE: 保存用户拖拽后面板的最终位置，用于文案更新时恢复位置。
 let panelDragPosition: { left: string; top: string } | null = null
->>>>>>> develop
 
 type AnchorPoint = {
   x: number
@@ -273,11 +264,7 @@ function getValidatedSelectionText(): SelectionValidationResult {
 }
 
 async function requestTranslation(text: string): Promise<TranslateTextResponse> {
-<<<<<<< HEAD
-  const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-=======
   const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
->>>>>>> develop
 
   return chromeApi.runtime.sendMessage({
     type: 'TRANSLATE_TEXT',
@@ -309,44 +296,6 @@ async function requestPageImageTranslation(payload: TranslatePageImageMessage['p
     type: 'TRANSLATE_PAGE_IMAGE',
     payload,
   }) as Promise<TranslatePageImageResponse>
-}
-
-function buildScreenshotProgressText(): string {
-  // NOTE: 截图处理完成后仅展示简洁的翻译中状态文案。
-  return '正在翻译中...'
-}
-
-function formatScreenshotFailureText(rawError: string): string {
-  const normalizedError = rawError
-    .trim()
-    .replace(/^(?:截图翻译失败[:：]\s*)+/u, '')
-
-  if (!normalizedError) {
-    return `${SCREENSHOT_ERROR_PREFIX}未知错误`
-  }
-
-  if (normalizedError.includes('\n')) {
-    return `${SCREENSHOT_ERROR_PREFIX}\n${normalizedError}`
-  }
-
-  return `${SCREENSHOT_ERROR_PREFIX}${normalizedError}`
-}
-
-async function requestCaptureVisibleTab(): Promise<CaptureVisibleTabResponse> {
-  const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-
-  return chromeApi.runtime.sendMessage({
-    type: 'CAPTURE_VISIBLE_TAB',
-  })
-}
-
-async function requestScreenshotTranslation(imageDataUrl: string): Promise<TranslateScreenshotImageResponse> {
-  const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-
-  return chromeApi.runtime.sendMessage({
-    type: 'TRANSLATE_SCREENSHOT_IMAGE',
-    payload: { imageDataUrl },
-  })
 }
 
 function buildScreenshotProgressText(): string {
@@ -614,8 +563,6 @@ async function translateScreenshotRect(rect: DragRect): Promise<void> {
   }
 }
 
-<<<<<<< HEAD
-=======
 async function extractImageDataUrl(img: HTMLImageElement): Promise<string> {
   // NOTE: 先尝试从 DOM 中已渲染的 <img> 直接绘入 canvas（同源图片可行）。
   try {
@@ -806,7 +753,6 @@ async function handleImageTranslate(): Promise<void> {
   }
 }
 
->>>>>>> develop
 function startScreenshotMode(): void {
   // NOTE: 进入截图模式前清理旧面板和旧任务，避免旧状态干扰框选。
   latestTranslateTaskId += 1
@@ -904,8 +850,6 @@ async function shouldAutoTranslate(): Promise<boolean> {
   return config.translationTriggerMode === 'auto_selection'
 }
 
-<<<<<<< HEAD
-=======
 // NOTE: 记录右键点击的图片元素，供图片翻译功能使用。
 document.addEventListener('contextmenu', (event) => {
   const target = event.target as HTMLElement | null
@@ -917,7 +861,6 @@ document.addEventListener('contextmenu', (event) => {
   }
 })
 
->>>>>>> develop
 // NOTE: 在鼠标抬起后按配置触发自动划词翻译，减少与页面选择行为冲突。
 document.addEventListener('mouseup', () => {
   window.setTimeout(async () => {
@@ -937,14 +880,6 @@ document.addEventListener('mouseup', () => {
   }, 20)
 })
 
-<<<<<<< HEAD
-const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-
-// NOTE: 接收后台右键指令与本地 OCR 调用，统一在页面上下文中处理。
-chromeApi.runtime.onMessage.addListener((message: BackgroundToContentMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
-  if (message?.type === 'CONTEXT_MENU_TRANSLATE') {
-    const fallbackText = String(message?.payload?.text ?? '')
-=======
 const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
 
 // NOTE: 接收后台右键指令与本地 OCR 调用，统一在页面上下文中处理。
@@ -953,24 +888,15 @@ chromeApi.runtime.onMessage.addListener((message: unknown, _sender: unknown, sen
 
   if (msg?.type === 'CONTEXT_MENU_TRANSLATE') {
     const fallbackText = String(msg?.payload?.text ?? '')
->>>>>>> develop
     void handleContextMenuTranslate(fallbackText)
     return
   }
 
-<<<<<<< HEAD
-  if (message?.type === 'START_SCREENSHOT_TRANSLATE') {
-=======
   if (msg?.type === 'START_SCREENSHOT_TRANSLATE') {
->>>>>>> develop
     startScreenshotMode()
     return
   }
 
-<<<<<<< HEAD
-  if (message?.type === 'RUN_LOCAL_OCR') {
-    const imageDataUrl = String(message?.payload?.imageDataUrl ?? '')
-=======
   if (msg?.type === 'START_IMAGE_TRANSLATE') {
     void handleImageTranslate()
     return
@@ -978,7 +904,6 @@ chromeApi.runtime.onMessage.addListener((message: unknown, _sender: unknown, sen
 
   if (msg?.type === 'RUN_LOCAL_OCR') {
     const imageDataUrl = String(msg?.payload?.imageDataUrl ?? '')
->>>>>>> develop
 
     if (!imageDataUrl.startsWith('data:image/')) {
       sendResponse({ ok: false, error: '无效的本地 OCR 图像数据' })
@@ -999,10 +924,7 @@ chromeApi.runtime.onMessage.addListener((message: unknown, _sender: unknown, sen
 })
 
 // NOTE: 点击面板外部时关闭浮层，并取消当前未完成任务的界面回写。
-<<<<<<< HEAD
-=======
 // 拖拽面板时不触发关闭，避免移动面板后误关。
->>>>>>> develop
 document.addEventListener('mousedown', (event) => {
   if (isDraggingPanel) {
     return

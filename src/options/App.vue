@@ -593,11 +593,7 @@ async function onSave(): Promise<void> {
       </div>
 
       <footer class="page-footer">
-<<<<<<< HEAD
-        Mikamth Translate V0.2 Beta Version Version Update time: 2026.4.22 Newest Version: V0.2 Beta Version
-=======
         Mikamth Translate V0.3 Beta Version / Version Update time: 2026.4.30 / Newest Version: V0.3 Beta Version
->>>>>>> develop
       </footer>
     </section>
   </main>

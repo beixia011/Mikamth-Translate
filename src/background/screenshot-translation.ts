@@ -6,19 +6,12 @@ import {
 } from '../shared/config'
 import type { ChromeApi } from '../shared/chrome-api'
 import type { LocalOcrLanguage, RunLocalOcrMessage, RunLocalOcrResponse } from '../shared/messages'
-<<<<<<< HEAD
-import { translateImageByLlm, translateTextByLlm } from './llm-client'
-import { extractTextByOffscreenTesseract } from './offscreen-ocr'
-
-type ScreenshotTranslationResult = {
-=======
 import { translateImageByLlm, translatePageImageByLlm, translateTextByLlm } from './llm-client'
 import { extractTextByOffscreenTesseract } from './offscreen-ocr'
 
 type ImageTranslationSource = 'screenshot' | 'page_image'
 
 type ImageTranslationResult = {
->>>>>>> develop
   translation: string
   usedMode: ScreenshotTranslateMode
 }
@@ -39,11 +32,7 @@ const LOCAL_OCR_LANGUAGE_LABELS: Record<LocalOcrLanguage, string> = {
   chi_sim: 'chi_sim',
 }
 
-<<<<<<< HEAD
-const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-=======
 const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
->>>>>>> develop
 
 function normalizeOcrText(rawText: string): string {
   // NOTE: 先做基础清洗，降低 OCR 结果中的空行噪音。
@@ -72,15 +61,11 @@ function buildModePlan(mode: ScreenshotTranslateMode, enableFallback: boolean): 
   return [mode, ...SCREENSHOT_FALLBACK_ORDER.filter((candidateMode) => candidateMode !== mode)]
 }
 
-<<<<<<< HEAD
-async function runVisionDirectMode(config: LlmConfig, imageDataUrl: string): Promise<string> {
-=======
 async function runVisionDirectMode(config: LlmConfig, imageDataUrl: string, source: ImageTranslationSource): Promise<string> {
   if (source === 'page_image') {
     return translatePageImageByLlm(imageDataUrl, config)
   }
 
->>>>>>> develop
   return translateImageByLlm(imageDataUrl, config)
 }
 
@@ -96,11 +81,7 @@ async function extractTextByPageTextDetector(tabId: number, imageDataUrl: string
 
   try {
     // NOTE: 页面 OCR 由内容脚本中的 TextDetector 执行，后台只负责调度与结果收集。
-<<<<<<< HEAD
-    response = await chromeApi.tabs.sendMessage(tabId, message)
-=======
     response = await chromeApi.tabs.sendMessage(tabId, message) as RunLocalOcrResponse | undefined
->>>>>>> develop
   } catch (error) {
     const messageText = error instanceof Error ? error.message : '未知错误'
     throw new Error(`页面 OCR 请求发送失败：${messageText}`)
@@ -223,18 +204,11 @@ async function translateWithMode(
   config: LlmConfig,
   mode: ScreenshotTranslateMode,
   imageDataUrl: string,
-<<<<<<< HEAD
-  context: ScreenshotTranslationContext,
-): Promise<string> {
-  if (mode === 'vision_direct') {
-    return runVisionDirectMode(config, imageDataUrl)
-=======
   source: ImageTranslationSource,
   context: ScreenshotTranslationContext,
 ): Promise<string> {
   if (mode === 'vision_direct') {
     return runVisionDirectMode(config, imageDataUrl, source)
->>>>>>> develop
   }
 
   if (mode === 'ocr_local') {
@@ -248,22 +222,14 @@ async function translateWithMode(
 export async function translateScreenshotByConfiguredMode(
   imageDataUrl: string,
   context: ScreenshotTranslationContext = {},
-<<<<<<< HEAD
-): Promise<ScreenshotTranslationResult> {
-  const config = await getLlmConfig()
-=======
 ): Promise<ImageTranslationResult> {
   const config = await getLlmConfig()
   const source: ImageTranslationSource = 'screenshot'
->>>>>>> develop
   const modePlan = buildModePlan(config.screenshotTranslateMode, config.screenshotEnableFallback)
   const errors: string[] = []
 
   for (const mode of modePlan) {
     try {
-<<<<<<< HEAD
-      const translation = await translateWithMode(config, mode, imageDataUrl, context)
-=======
       const translation = await translateWithMode(config, mode, imageDataUrl, source, context)
 
       return {
@@ -292,7 +258,6 @@ export async function translatePageImageByConfiguredMode(
   for (const mode of modePlan) {
     try {
       const translation = await translateWithMode(config, mode, imageDataUrl, source, context)
->>>>>>> develop
 
       return {
         translation,

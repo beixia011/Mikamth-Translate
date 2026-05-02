@@ -2,13 +2,6 @@ import type {
   BackgroundToContentMessage,
   ContentToBackgroundMessage,
   ContextMenuTranslateMessage,
-<<<<<<< HEAD
-  StartScreenshotTranslateMessage,
-} from '../shared/messages'
-import type { ChromeApi, ChromeTab, ContextMenuInfo } from '../shared/chrome-api'
-import { translateTextByLlm } from './llm-client'
-import { translateScreenshotByConfiguredMode } from './screenshot-translation'
-=======
   StartImageTranslateMessage,
   StartScreenshotTranslateMessage,
   TranslatePageImageMessage,
@@ -17,19 +10,13 @@ import type { ChromeApi, ChromeTab, ContextMenuInfo } from '../shared/chrome-api
 import { getLlmConfig } from '../shared/config'
 import { translateTextByLlm } from './llm-client'
 import { translatePageImageByConfiguredMode, translateScreenshotByConfiguredMode } from './screenshot-translation'
->>>>>>> develop
 
 const ROOT_CONTEXT_MENU_ID = 'my-translate-root'
 const TRANSLATE_CONTEXT_MENU_ID = 'translate-selected-text'
 const SCREENSHOT_CONTEXT_MENU_ID = 'translate-screenshot'
-<<<<<<< HEAD
-
-const chromeApi = (globalThis as { chrome?: ChromeApi }).chrome
-=======
 const IMAGE_TRANSLATE_CONTEXT_MENU_ID = 'translate-page-image'
 
 const chromeApi = (globalThis as unknown as { chrome: ChromeApi }).chrome
->>>>>>> develop
 
 function isNoReceivingEndError(error: unknown): boolean {
   const messageText = error instanceof Error ? error.message : String(error ?? '')
@@ -73,8 +60,6 @@ function ensureContextMenu(): void {
       title: '截图翻译',
       contexts: ['all'],
     })
-<<<<<<< HEAD
-=======
 
     chromeApi.contextMenus.create({
       id: IMAGE_TRANSLATE_CONTEXT_MENU_ID,
@@ -82,7 +67,6 @@ function ensureContextMenu(): void {
       title: '翻译页面图片',
       contexts: ['image'],
     })
->>>>>>> develop
   })
 }
 
@@ -164,8 +148,6 @@ function handleCaptureVisibleTabMessage(
   return true
 }
 
-<<<<<<< HEAD
-=======
 // NOTE: 在后台 Service Worker 中通过 OffscreenCanvas 将远程图片转为 dataUrl，绕过 CORS。
 // referer 用于构造 Referer 请求头，绕过图片服务器的防盗链检查。
 async function fetchImageAsDataUrl(imageUrl: string, referer?: string): Promise<string> {
@@ -213,7 +195,6 @@ async function fetchImageAsDataUrl(imageUrl: string, referer?: string): Promise<
   })
 }
 
->>>>>>> develop
 function handleTranslateScreenshotMessage(
   message: ContentToBackgroundMessage,
   sender: any,
@@ -247,8 +228,6 @@ function handleTranslateScreenshotMessage(
   return true
 }
 
-<<<<<<< HEAD
-=======
 function handleTranslatePageImageMessage(
   message: ContentToBackgroundMessage,
   sender: any,
@@ -293,7 +272,6 @@ function handleTranslatePageImageMessage(
   return true
 }
 
->>>>>>> develop
 // NOTE: 安装插件和浏览器启动后都尝试注册右键菜单。
 chromeApi.runtime.onInstalled.addListener(() => {
   ensureContextMenu()
@@ -305,19 +283,6 @@ chromeApi.runtime.onStartup.addListener(() => {
 
 ensureContextMenu()
 
-<<<<<<< HEAD
-// NOTE: 后台统一处理来自内容脚本的翻译、截图、截图翻译请求。
-chromeApi.runtime.onMessage.addListener((message: ContentToBackgroundMessage, _sender: unknown, sendResponse: (response: unknown) => void) => {
-  if (handleTranslateTextMessage(message, sendResponse)) {
-    return true
-  }
-
-  if (handleCaptureVisibleTabMessage(message, sender, sendResponse)) {
-    return true
-  }
-
-  if (handleTranslateScreenshotMessage(message, sender, sendResponse)) {
-=======
 // NOTE: 后台统一处理来自内容脚本的翻译、截图、截图翻译、图片翻译请求。
 chromeApi.runtime.onMessage.addListener((message: unknown, sender: unknown, sendResponse: (response: unknown) => void) => {
   const msg = message as ContentToBackgroundMessage
@@ -335,18 +300,13 @@ chromeApi.runtime.onMessage.addListener((message: unknown, sender: unknown, send
   }
 
   if (handleTranslatePageImageMessage(msg, sender, sendResponse)) {
->>>>>>> develop
     return true
   }
 
   return false
 })
 
-<<<<<<< HEAD
-// NOTE: 处理网页右键菜单事件，分别触发文本翻译或截图翻译。
-=======
 // NOTE: 处理网页右键菜单事件，分别触发文本翻译、截图翻译或页面图片翻译。
->>>>>>> develop
 chromeApi.contextMenus.onClicked.addListener((info: ContextMenuInfo, tab?: ChromeTab) => {
   const tabId = typeof tab?.id === 'number' ? tab.id : null
 
@@ -375,8 +335,6 @@ chromeApi.contextMenus.onClicked.addListener((info: ContextMenuInfo, tab?: Chrom
     }
 
     void safeSendMessageToTab(tabId, message)
-<<<<<<< HEAD
-=======
     return
   }
 
@@ -386,6 +344,5 @@ chromeApi.contextMenus.onClicked.addListener((info: ContextMenuInfo, tab?: Chrom
     }
 
     void safeSendMessageToTab(tabId, message)
->>>>>>> develop
   }
 })

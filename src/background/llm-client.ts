@@ -1,8 +1,5 @@
 import {
-<<<<<<< HEAD
-=======
   DEFAULT_PAGE_IMAGE_PROMPT,
->>>>>>> develop
   DEFAULT_TRANSLATION_PROMPT,
   getLlmConfig,
   type LlmConfig,
@@ -89,15 +86,12 @@ function buildScreenshotSystemPrompt(targetLanguage: TranslationTargetLanguage):
   return `${DEFAULT_SCREENSHOT_PROMPT}\n${languageSuffixPrompt}`
 }
 
-<<<<<<< HEAD
-=======
 function buildPageImageSystemPrompt(customPrompt: string, targetLanguage: TranslationTargetLanguage): string {
   const basePrompt = customPrompt.trim() || DEFAULT_PAGE_IMAGE_PROMPT
   const languageSuffixPrompt = TARGET_LANGUAGE_PROMPT_SUFFIX[targetLanguage]
   return `${basePrompt}\n${languageSuffixPrompt}`
 }
 
->>>>>>> develop
 function resolveTextEndpointConfig(config: LlmConfig): LlmEndpointConfig {
   if (!config.textBaseUrl) {
     throw new Error('请先在配置页面填写文本模型 baseUrl')
@@ -236,11 +230,7 @@ export async function translateTextByLlm(text: string, inputConfig?: LlmConfig):
         content: text,
       },
     ],
-<<<<<<< HEAD
-    config.requestTimeoutMs,
-=======
     config.textRequestTimeoutMs,
->>>>>>> develop
   )
 
   if (response.rawErrorText) {
@@ -277,11 +267,7 @@ export async function translateImageByLlm(imageDataUrl: string, inputConfig?: Ll
         ],
       },
     ],
-<<<<<<< HEAD
-    config.requestTimeoutMs,
-=======
     config.screenshotRequestTimeoutMs,
->>>>>>> develop
   )
 
   if (response.rawErrorText) {
@@ -294,8 +280,6 @@ export async function translateImageByLlm(imageDataUrl: string, inputConfig?: Ll
 
   return response.text
 }
-<<<<<<< HEAD
-=======
 
 // NOTE: 页面图片视觉翻译，使用图片翻译专用提示词与超时配置。
 export async function translatePageImageByLlm(imageDataUrl: string, inputConfig?: LlmConfig): Promise<string> {
@@ -338,4 +322,3 @@ export async function translatePageImageByLlm(imageDataUrl: string, inputConfig?
 
   return response.text
 }
->>>>>>> develop
